@@ -1,37 +1,35 @@
-#/config/settings.py
-
 import os
 from dotenv import load_dotenv
-
-# ✅ Corrected LangChain Imports
 from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_community.chat_message_histories import ChatMessageHistory
 
-# ✅ Updated memory import
-from langchain.memory import ConversationBufferMemory  
-
-# ✅ Load environment variables
 dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
 load_dotenv(dotenv_path)
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 DB_PATH = os.getenv("DB_PATH")
 
-if not GOOGLE_API_KEY:
-    raise ValueError("❌ Missing GOOGLE_API_KEY in .env file")
+if not OPENAI_API_KEY:
+    raise ValueError("Falta OPENAI_API_KEY en el archivo .env")
 if not DB_PATH:
-    raise ValueError("❌ Missing DB_PATH in .env file")
+    raise ValueError("Falta DB_PATH en el archivo .env")
 
-# ✅ Initialize LLM
-llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=GOOGLE_API_KEY)
+llm = ChatOpenAI(
+    model="gpt-4o-mini",
+    api_key=OPENAI_API_KEY,
+)
 
-# ✅ Use updated Chroma and OllamaEmbeddings
-embedding_model = OllamaEmbeddings(model="mxbai-embed-large:latest")
+embedding_model = OpenAIEmbeddings(
+    model="text-embedding-3-small",
+    api_key=OPENAI_API_KEY,
+)
 vector_db = Chroma(persist_directory=DB_PATH, embedding_function=embedding_model)
 
-# ✅ Use `ConversationBufferMemory` to store chat history
-classification_memory = ConversationBufferMemory(memory_key="classification_history")
+_session_histories: dict[str, ChatMessageHistory] = {}
 
-shared_memory = ConversationBufferMemory(memory_key="history")
 
+def get_session_history(session_id: str) -> ChatMessageHistory:
+    if session_id not in _session_histories:
+        _session_histories[session_id] = ChatMessageHistory()
+    return _session_histories[session_id]

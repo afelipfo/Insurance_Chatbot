@@ -1,22 +1,13 @@
-# prompts/classification_prompt.py
+from langchain_core.prompts import ChatPromptTemplate
 
-from langchain.prompts import PromptTemplate
-
-classification_prompt = PromptTemplate(
-    input_variables=["question"],
-    template='''
-Clasifica la siguiente consulta del usuario en una de las siguientes categorías:
-
-- seguro
-- web_search
-- conversación_general
-- policy_optimizer
-
-Solo responde con una de las cuatro opciones exactas, sin ninguna explicación adicional.
-
-Consulta:
-{question}
-
-Clasificación:
-'''
-)
+classification_prompt = ChatPromptTemplate.from_messages([
+    ("system", (
+        "Clasifica la consulta del usuario en exactamente una de estas categorías:\n"
+        "- seguro\n"
+        "- web_search\n"
+        "- conversacion_general\n"
+        "- policy_optimizer\n\n"
+        "Responde ÚNICAMENTE con el nombre de la categoría, sin explicación."
+    )),
+    ("human", "{question}"),
+])

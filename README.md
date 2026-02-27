@@ -1,73 +1,95 @@
-# Insurance Chatbot
+# Seguritos - Chatbot de Seguros para LATAM
 
-This chatbot assists users in the LATAM insurance market by answering queries, performing web searches, and optimizing policies based on user input.
+Chatbot de inteligencia artificial especializado en el mercado asegurador de LATAM. Responde consultas sobre seguros, busca noticias relevantes en la web y sugiere optimizaciones de pólizas.
 
-## Project Structure
+## Estructura del proyecto
 
 ```
-your_project/
-├── main.py                            # Entry point of the project
+Insurance_Chatbot/
+├── main.py                             # Punto de entrada (Chainlit)
+├── ingest.py                           # Script de ingesta de PDFs en ChromaDB
 ├── config/
-│   └── settings.py                    # Environment variables and database path configuration
+│   └── settings.py                     # Configuración: LLM, embeddings, vector DB
 ├── prompts/
-│   └── classification_prompt.py       # Classification prompt
-│   └── conversation_prompt.py         # Conversation prompt
+│   ├── classification_prompt.py        # Prompt de clasificación de consultas
+│   └── conversation_prompt.py          # Prompts de conversación, RAG, búsqueda web y optimización
 ├── chains/
-│   └── classification_chain.py        # Classification chain
-│   └── conversation_chain.py          # Conversation chain
+│   ├── classification_chain.py         # Cadena de clasificación
+│   └── conversation_chain.py           # Cadena de conversación general
 ├── functions/
-│   └── rag_chain.py                   # RAG chain for insurance queries
-│   └── web_search_chain.py            # Web search chain
-│   └── policy_optimizer_chain.py      # Policy optimizer
+│   ├── rag_chain.py                    # Consulta documentos de pólizas (RAG)
+│   ├── web_search_chain.py             # Búsqueda de noticias en la web
+│   └── policy_optimizer_chain.py       # Sugerencias de optimización de pólizas
 ├── handlers/
-│   └── router.py                      # Routes queries to the correct chain
-├── requirements.txt                   # Project dependencies
+│   ├── router.py                       # Clasifica y enruta al chain correcto
+│   └── handle_user_query.py            # Punto de entrada para consultas de usuario
+├── vector_db/
+│   ├── chroma_db/                      # Base de datos ChromaDB con embeddings
+│   └── documentos/                     # PDFs de pólizas de seguros
+├── requirements.txt                    # Dependencias del proyecto
+└── .env.example                        # Variables de entorno requeridas
 ```
 
-## Setup
+## Requisitos previos
 
-1. **Install dependencies**:
+- **Python 3.9+**
+- **API Key de OpenAI**
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Instalación
 
-2. **Create a `.env` file** with the following content:
+1. Clonar el repositorio y crear un entorno virtual:
 
-   ```plaintext
-   DB_PATH= path-to-vector-db
-   API_KEY=your-api-key-here
-   ```
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
 
-## Running the Chatbot
+2. Instalar dependencias:
 
-To start the chatbot, run:
+```bash
+pip install -r requirements.txt
+```
+
+3. Copiar el archivo de ejemplo y configurar las variables de entorno:
+
+```bash
+cp .env.example .env
+```
+
+Editar `.env` con tus valores:
 
 ```
+OPENAI_API_KEY=tu_api_key_de_openai
+DB_PATH=./vector_db/chroma_db
+```
+
+4. Indexar los documentos PDF en la base de datos vectorial:
+
+```bash
+python ingest.py
+```
+
+## Ejecución
+
+```bash
 chainlit run main.py
 ```
 
-The chatbot will respond to insurance-related queries, web searches, and policy optimizations based on user input.
+Se abrirá una interfaz web en http://localhost:8000 donde podrás interactuar con Seguritos.
 
-## Best Practices for Framing Questions
+## Cómo funciona
 
-For the best results, use clear, specific questions that align with the chatbot's capabilities:
+1. El usuario envía una consulta.
+2. La **cadena de clasificación** determina la categoría: `seguro`, `web_search`, `conversacion_general` o `policy_optimizer`.
+3. El **router** dirige la consulta a la función correspondiente:
+   - **seguro** -> Búsqueda RAG en documentos de pólizas
+   - **web_search** -> Búsqueda de noticias con DuckDuckGo
+   - **conversacion_general** -> Conversación directa con el LLM
+   - **policy_optimizer** -> Análisis y sugerencias de optimización de pólizas
+4. Se mantiene historial de conversación por sesión.
 
-1. **Be Direct and Specific**:
-   - Good: *"¿Cuáles son las coberturas de un seguro de auto en Chile?"*
-   - Avoid: *"Dime algo sobre seguros."*
+## Consejos para mejores resultados
 
-2. **Ask One Question at a Time**:
-   - Good: *"¿Cómo puedo optimizar mi póliza para reducir costos?"*
-   - Avoid: *"¿Cómo optimizo mi póliza y qué coberturas tiene?"*
-
-3. **Use Natural Language**: Frame questions as you would ask a human.
-   - Good: *"¿Qué opciones de seguro de hogar me recomiendas?"*
-   - Avoid: *"Opciones hogar seguro."*
-
-4. **Clarify if Needed**: If the response isn’t what you expect, clarify or provide more context in the follow-up.
-
-## Configuration
-
-- **Database Path**: The path to the database storing embeddings can be updated in the `.env` file using the `DB_PATH` variable.
-- **API Key**: Add the relevant API key for external tools in the `.env` file.
+- **Sé específico**: *"¿Cuáles son las coberturas de un seguro de auto en Chile?"*
+- **Una pregunta a la vez**: *"¿Cómo puedo reducir el costo de mi póliza?"*
+- **Usa lenguaje natural**: Formula preguntas como se las harías a una persona.
